@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Courier Label Print</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input[type="text"], select {
+      margin-top: 5px;
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+
+    .section {
+      border: 1px solid #000;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .print-area {
+      display: none;
+    }
+
+    .label-box {
+      border: 1px solid #000;
+      page-break-inside: avoid;
+      line-height: 1.3;
+    }
+
+    .label-box p,
+    .label-box h4 {
+      margin: 4px 0;
+    }
+
+    .label-box .from-heading {
+      margin-top: 20px;
+    }
+
+    .label-form {
+      position: relative;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    @media print {
+      .form-area, input, select, button {
+        display: none !important;
+      }
+
+      .print-area {
+        display: block;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="form-area">
+    <h2>Courier Label Generator</h2>
+
+    <label for="sizeSelector">Envelope Size:</label>
+    <select id="sizeSelector">
+      <option value="small">Small</option>
+      <option value="medium" selected>Medium</option>
+      <option value="large">Large</option>
+    </select>
+
+    <div id="labelContainer"></div>
+    <button onclick="addLabel()">➕ Add Label</button>
+    <button onclick="printAllLabels()">🖨 Print All</button>
+  </div>
+
+  <div class="print-area" id="printArea"></div>
+
+  <script>
+    let storeData = {};
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycby4kkdlxo1esaeMpclvm03nXAXmzJNGyJgw11Jkj_eXT5hahvFwMlCbOHfPeRhmBhvD0w/exec";
+
+    // Fetch data from Google Sheet
+    fetch(SHEET_API_URL)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(row => {
+          const storeName = row["Store Name"];
+          const address = row["Address"];
+          const phone = row["Phone Number"];
+          storeData[storeName] = { address, phone };
+        });
+        addLabel(); // Add first label
+      })
+      .catch(err => {
+        console.error("Error fetching sheet data:", err);
+        alert("Failed to load store data from Google Sheet.");
+      });
+
+    let labelCounter = 0;
+    const MAX_LABELS = 9;
+
+    function populateDropdowns(index) {
+      const options = Object.keys(storeData)
+        .map(store => `<option value="${store}">${store}</option>`)
+        .join("");
+
+      const toStore = document.getElementById(`toStore${index}`);
+      const fromStore = document.getElementById(`fromStore${index}`);
+      toStore.innerHTML += options;
+      fromStore.innerHTML += options;
+
+      // Auto-fill last selected FROM store
+      const lastFrom = localStorage.getItem("lastFromStore");
+      if (lastFrom && storeData[lastFrom]) {
+        fromStore.value = lastFrom;
+        fillDetails('from', index);
+      }
+    }
+
+    function addLabel() {
+      if (document.querySelectorAll(".label-form").length >= MAX_LABELS) {
+        alert("Maximum 3 labels allowed.");
+        return;
+      }
+
+      const index = labelCounter++;
+      const container = document.getElementById('labelContainer');
+
+      const section = document.createElement('div');
+      section.className = 'section label-form';
+      section.setAttribute('data-index', index);
+
+      section.innerHTML = `
+        <button class="delete-btn" onclick="deleteLabel(this)">Delete</button>
+
+        <h4>TO</h4>
+        <label>Name (Optional):</label>
+        <input type="text" id="toName${index}">
+        <label>Store:</label>
+        <select id="toStore${index}" onchange="fillDetails('to', ${index})">
+          <option value="">Select Store</option>
+        </select>
+        <div id="toDetails${index}"></div>
+
+        <h4>FROM</h4>
+        <label>Name (Optional):</label>
+        <input type="text" id="fromName${index}">
+        <label>Store:</label>
+        <select id="fromStore${index}" onchange="fillDetails('from', ${index})">
+          <option value="">Select Store</option>
+        </select>
+        <div id="fromDetails${index}"></div>
+      `;
+
+      container.appendChild(section);
+      populateDropdowns(index);
+    }
+
+    function deleteLabel(button) {
+      const section = button.closest('.label-form');
+      section.remove();
+    }
+
+    function fillDetails(type, index) {
+      const store = document.getElementById(`${type}Store${index}`).value;
+      const div = document.getElementById(`${type}Details${index}`);
+      if (storeData[store]) {
+        div.innerHTML = `
+          <p><strong>Address:</strong> ${storeData[store].address}</p>
+          <p><strong>Phone Number:</strong> ${storeData[store].phone}</p>
+        `;
+        if (type === "from") {
+          localStorage.setItem("lastFromStore", store);
+        }
+      } else {
+        div.innerHTML = '';
+      }
+    }
+
+    function printAllLabels() {
+      const printArea = document.getElementById("printArea");
+      printArea.innerHTML = "";
+
+      const forms = document.querySelectorAll(".label-form");
+
+      if (forms.length === 0) {
+        alert("Please add at least one label.");
+        return;
+      }
+
+      let labelsPrinted = 0;
+
+      const size = document.getElementById('sizeSelector').value;
+      let fontSize = 20, padding = 10, marginBottom = 14;
+      if (size === 'medium') {
+        fontSize = 25;
+        padding = 16;
+        marginBottom = 22;
+      } else if (size === 'large') {
+        fontSize = 30;
+        padding = 22;
+        marginBottom = 30;
+      }
+
+      forms.forEach((form, index) => {
+        const i = form.getAttribute("data-index");
+        const toName = document.getElementById(`toName${i}`).value;
+        const fromName = document.getElementById(`fromName${i}`).value;
+        const toStore = document.getElementById(`toStore${i}`).value;
+        const fromStore = document.getElementById(`fromStore${i}`).value;
+
+        const to = storeData[toStore];
+        const from = storeData[fromStore];
+
+        if (!toStore || !fromStore || !to || !from) {
+          alert(`Label ${parseInt(i) + 1} is incomplete. Please select both TO and FROM stores.`);
+          return;
+        }
+
+        const pageBreak = (index > 0 && index % 3 === 0) ? 'page-break-before: always;' : '';
+        labelsPrinted++;
+
+        printArea.innerHTML += `
+          <div class="label-box" style="font-size: ${fontSize}px; padding: ${padding}px; margin-bottom: ${marginBottom}px; ${pageBreak}">
+            <div>
+              <h4>To${toName ? `, ${toName}` : ''}</h4>
+              <p>Ivenus - ${toStore}</p>
+              <p>Address - ${to.address}</p>
+              <p>Phone Number - ${to.phone}</p>
+            </div>
+            <div>
+              <h4 class="from-heading">From${fromName ? `, ${fromName}` : ''}</h4>
+              <p>Ivenus - ${fromStore}</p>
+              <p>Address - ${from.address}</p>
+              <p>Phone Number - ${from.phone}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      if (labelsPrinted > 0) {
+        window.print();
+      }
+    }
+  </script>
+</body>
+</html>

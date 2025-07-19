@@ -5,26 +5,26 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 1.5cm;
+      padding: 20px;
     }
 
     label {
       display: block;
-      margin-top: 0.3cm;
+      margin-top: 10px;
     }
 
     input[type="text"], select {
-      margin-top: 0.3cm;
-      width: 100%;
-      max-width: 15cm;
-      padding: 0.3cm;
+      margin-top: 5px;
+      width: 80%;
+      max-width: 500px;
+      padding: 6px;
       box-sizing: border-box;
     }
 
     .section {
-      border: 0.05cm solid #000;
-      padding: 0.5cm;
-      margin: 0.5cm 0;
+      border: 1px solid #000;
+      padding: 10px;
+      margin: 10px 0;
     }
 
     .print-area {
@@ -32,21 +32,19 @@
     }
 
     .label-box {
-      border: 0.05cm solid #000;
+      border: 1px solid #000;
       page-break-inside: avoid;
       line-height: 1.3;
-      font-size: 0.5cm;
-      padding: 0.7cm;
-      margin-bottom: 1.5cm;
+      margin-bottom: 80px;
     }
 
     .label-box p,
     .label-box h4 {
-      margin: 0.2cm 0;
+      margin: 4px 0;
     }
 
     .label-box .from-heading {
-      margin-top: 0.7cm;
+      margin-top: 20px;
     }
 
     .label-form {
@@ -55,14 +53,14 @@
 
     .delete-btn {
       position: absolute;
-      top: 0.2cm;
-      right: 0.2cm;
+      top: 5px;
+      right: 5px;
       background: red;
       color: white;
       border: none;
-      padding: 0.2cm 0.4cm;
+      padding: 4px 8px;
       cursor: pointer;
-      font-size: 0.4cm;
+      font-size: 12px;
     }
 
     @media print {
@@ -73,17 +71,9 @@
       .print-area {
         display: block;
       }
-
-      body {
-        padding: 0.5cm;
-      }
-
-      .label-box {
-        page-break-inside: avoid;
-        page-break-after: auto;
-      }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
@@ -99,7 +89,7 @@
 
     <div id="labelContainer"></div>
     <button onclick="addLabel()">➕ Add Label</button>
-    <button onclick="printAllLabels()">🖨 Print All</button>
+    <button onclick="printAllLabels()">🖨 Generate PDF & Print</button>
   </div>
 
   <div class="print-area" id="printArea"></div>
@@ -215,17 +205,18 @@
         return;
       }
 
-      const size = document.getElementById('sizeSelector').value;
-      let fontSize = "0.4cm", padding = "0.6cm", marginBottom = "1cm";
+      let labelsPrinted = 0;
 
+      const size = document.getElementById('sizeSelector').value;
+      let fontSize = 10, padding = 5, marginBottom = 6;
       if (size === 'medium') {
-        fontSize = "0.5cm";
-        padding = "0.7cm";
-        marginBottom = "1.5cm";
+        fontSize = 16;
+        padding = 8;
+        marginBottom = 14;
       } else if (size === 'large') {
-        fontSize = "0.7cm";
-        padding = "1cm";
-        marginBottom = "2cm";
+        fontSize = 24;
+        padding = 14;
+        marginBottom = 20;
       }
 
       forms.forEach((form, index) => {
@@ -244,9 +235,10 @@
         }
 
         const pageBreak = (index > 0 && index % 3 === 0) ? 'page-break-before: always;' : '';
+        labelsPrinted++;
 
         printArea.innerHTML += `
-          <div class="label-box" style="font-size: ${fontSize}; padding: ${padding}; margin-bottom: ${marginBottom}; ${pageBreak}">
+          <div class="label-box" style="font-size: ${fontSize}px; padding: ${padding}px; margin-bottom: ${marginBottom}px; ${pageBreak}">
             <div>
               <h4>To${toName ? `, ${toName}` : ''}</h4>
               <p>iVenus - ${toStore}</p>
@@ -263,7 +255,20 @@
         `;
       });
 
-      window.print();
+      if (labelsPrinted > 0) {
+        const opt = {
+          margin:       0.5,
+          filename:     'Courier_Labels.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+          pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(printArea).save().then(() => {
+          window.print();
+        });
+      }
     }
   </script>
 </body>

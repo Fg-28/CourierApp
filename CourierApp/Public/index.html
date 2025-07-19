@@ -208,7 +208,7 @@
       let labelsPrinted = 0;
 
       const size = document.getElementById('sizeSelector').value;
-      let fontSize = 10, padding = 5, marginBottom = 6;
+      let fontSize = 8, padding = 5, marginBottom = 6;
       if (size === 'medium') {
         fontSize = 16;
         padding = 8;
@@ -241,13 +241,13 @@
           <div class="label-box" style="font-size: ${fontSize}px; padding: ${padding}px; margin-bottom: ${marginBottom}px; ${pageBreak}">
             <div>
               <h4>To${toName ? `, ${toName}` : ''}</h4>
-              <p>Ivenus - ${toStore}</p>
+              <p>iVenus - ${toStore}</p>
               <p>Address - ${to.address}</p>
               <p>Phone Number - ${to.phone}</p>
             </div>
             <div>
               <h4 class="from-heading">From${fromName ? `, ${fromName}` : ''}</h4>
-              <p>Ivenus - ${fromStore}</p>
+              <p>iVenus - ${fromStore}</p>
               <p>Address - ${from.address}</p>
               <p>Phone Number - ${from.phone}</p>
             </div>

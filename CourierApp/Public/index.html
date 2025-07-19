@@ -208,15 +208,15 @@
       let labelsPrinted = 0;
 
       const size = document.getElementById('sizeSelector').value;
-      let fontSize = 14, padding = 6, marginBottom = 10;
+      let fontSize = 12, padding = 6, marginBottom = 8;
       if (size === 'medium') {
-        fontSize = 18;
-        padding = 10;
-        marginBottom = 16;
+        fontSize = 16;
+        padding = 8;
+        marginBottom = 14;
       } else if (size === 'large') {
-        fontSize = 22;
-        padding = 14;
-        marginBottom = 20;
+        fontSize = 20;
+        padding = 12;
+        marginBottom = 18;
       }
 
       forms.forEach((form, index) => {

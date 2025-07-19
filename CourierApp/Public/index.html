@@ -15,8 +15,7 @@
 
     input[type="text"], select {
       margin-top: 5px;
-      width: 80%;
-      max-width: 500px;
+      width: 100%;
       padding: 6px;
       box-sizing: border-box;
     }
@@ -35,7 +34,6 @@
       border: 1px solid #000;
       page-break-inside: avoid;
       line-height: 1.3;
-      margin-bottom: 80px;
     }
 
     .label-box p,
@@ -72,8 +70,12 @@
         display: block;
       }
     }
+
+    @page {
+      size: A4;
+      margin: 1cm;
+    }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
@@ -89,7 +91,7 @@
 
     <div id="labelContainer"></div>
     <button onclick="addLabel()">➕ Add Label</button>
-    <button onclick="printAllLabels()">🖨 Generate PDF & Print</button>
+    <button onclick="printAllLabels()">🖨 Print All</button>
   </div>
 
   <div class="print-area" id="printArea"></div>
@@ -107,7 +109,7 @@
           const phone = row["Phone Number"];
           storeData[storeName] = { address, phone };
         });
-        addLabel();
+        addLabel(); // Add first label
       })
       .catch(err => {
         console.error("Error fetching sheet data:", err);
@@ -208,15 +210,15 @@
       let labelsPrinted = 0;
 
       const size = document.getElementById('sizeSelector').value;
-      let fontSize = 10, padding = 5, marginBottom = 6;
+      let fontSize = "0.5cm", padding = "0.3cm", marginBottom = "0.4cm";
       if (size === 'medium') {
-        fontSize = 16;
-        padding = 8;
-        marginBottom = 14;
+        fontSize = "0.65cm";
+        padding = "0.45cm";
+        marginBottom = "0.6cm";
       } else if (size === 'large') {
-        fontSize = 24;
-        padding = 14;
-        marginBottom = 20;
+        fontSize = "0.8cm";
+        padding = "0.6cm";
+        marginBottom = "0.8cm";
       }
 
       forms.forEach((form, index) => {
@@ -238,16 +240,16 @@
         labelsPrinted++;
 
         printArea.innerHTML += `
-          <div class="label-box" style="font-size: ${fontSize}px; padding: ${padding}px; margin-bottom: ${marginBottom}px; ${pageBreak}">
+          <div class="label-box" style="font-size: ${fontSize}; padding: ${padding}; margin-bottom: ${marginBottom}; ${pageBreak}">
             <div>
               <h4>To${toName ? `, ${toName}` : ''}</h4>
-              <p>iVenus - ${toStore}</p>
+              <p>Ivenus - ${toStore}</p>
               <p>Address - ${to.address}</p>
               <p>Phone Number - ${to.phone}</p>
             </div>
             <div>
               <h4 class="from-heading">From${fromName ? `, ${fromName}` : ''}</h4>
-              <p>iVenus - ${fromStore}</p>
+              <p>Ivenus - ${fromStore}</p>
               <p>Address - ${from.address}</p>
               <p>Phone Number - ${from.phone}</p>
             </div>
@@ -256,18 +258,7 @@
       });
 
       if (labelsPrinted > 0) {
-        const opt = {
-          margin:       0.5,
-          filename:     'Courier_Labels.pdf',
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2 },
-          jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-          pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(printArea).save().then(() => {
-          window.print();
-        });
+        window.print();
       }
     }
   </script>
